@@ -1,0 +1,144 @@
+@import 'tailwindcss';
+
+@theme {
+    --font-lato: 'Lato', 'sans-serif';
+    --font-roboto: 'Roboto', 'sans-serif';
+    /* primary */
+    --xcolor-primary: var(--color-violet-600);
+    --color-primary-deep: var(--color-violet-900);
+    --color-primary-400: var(--color-violet-400);
+    --color-primary-300: var(--color-violet-300);
+    --color-primary-200: var(--color-violet-200);
+    --color-primary-100: var(--color-violet-50);
+
+    /* surface */
+    --color-surface: var(--color-gray-300);
+    --color-surface-400: var(--color-gray-200);
+    --color-surface-300: var(--color-gray-100);
+    --color-surface-200: var(--color-slate-50);
+    --color-surface-100: var(--color-white);
+
+    /* emphasis */
+    --color-emphasis-higher: var(--color-black);
+    --color-emphasis-high: var(--color-slate-800);
+    --color-emphasis-medium: var(--color-slate-500);
+    --color-emphasis-low: var(--color-gray-400);
+    --color-emphasis-disabled: var(--color-slate-50);
+
+    --color-positive: var(--color-green-600);
+    --color-warning: var(--color-orange-600);
+    --color-active: var(--color-blue-600);
+    --color-negative: var(--color-red-600);
+
+    --color-base: var(--color-white) /*Spacing*/
+    /*--spacing: 1px;*/
+    /* Overlay is for backgrounds */
+;
+}
+@plugin "daisyui" {
+    themes: light --default;
+    exclude: checkbox, footer, typography, glass, rootcolor, rootscrollgutter;
+}
+
+body {
+    @apply font-lato;
+}
+
+/*AppCalendar Styles*/
+
+.no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+    display: none;
+    background: red;
+}
+
+.v-select {
+    /*background: red;*/
+    width: 100%;
+    @apply p-0 font-medium;
+
+    &:focus-within {
+        /*@apply border-primary;*/
+    }
+
+    .vs__dropdown-toggle {
+        height: 40px !important;
+        @apply border-0 rounded-xl outline outline-surface-400;
+    }
+}
+
+.vs__dropdown-menu {
+    display: block !important;
+    --vs-dropdown-bg: var(--color-surface-100);
+    --vs-dropdown-color: inherit;
+    --vs-dropdown-z-index: 1000;
+    --vs-dropdown-min-width: 164px;
+    --vs-dropdown-max-height: 350px;
+    --vs-dropdown-box-shadow: 0px 24px 32px -8px var(--vs-colors--darkest);
+    /*background: red;*/
+    @apply border-t-0 !border-surface-400 !rounded-b !rounded-b-xl !bg-surface-100;
+}
+
+.vue-tel-input {
+    border: none !important;
+
+    position: relative;
+    border-radius: 0.79rem !important;
+    padding-left:
+
+    :focus-within {
+        border: 0 !important;
+        box-shadow: none !important;
+    }
+
+    input {
+        @apply relative;
+    }
+}
+
+.vue-tel-input input {
+    position: relative;
+    font-weight: 500;
+    @apply text-neutral;
+    padding: 0.59rem !important;
+}
+
+
+
+.vue-tel-input .vti__drwopdown {
+    padding-left: 0;
+    margin-left: 0;
+
+    .vti__selection {
+        margin-right: 12px !important;
+
+        .vti__flag {
+            margin-left: 0 !important;
+            @apply rounded-3xl;
+        }
+
+        /*.vti__country-code {*/
+        /*  font-weight: 500;*/
+        /*}*/
+    }
+}
+
+.vue-tel-input .vti__country-code {
+    font-weight: 500;
+    color: #2a323c !important;
+    font-size: 13px;
+    margin-right: 6px;
+}
+
+/*.before-dot {*/
+/*    @apply before:left-[-10px] ml-4 before:top-[43%] before:h-[4px] before:w-[4px] before:rounded-full before:bg-black before:absolute;*/
+/*}*/
+
+.vue-tel-input:focus-within {
+    border: 0 !important;
+    box-shadow: none !important;
+}

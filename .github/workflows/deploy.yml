@@ -1,0 +1,127 @@
+name: Build and Deploy
+
+on:
+  push:
+    branches:
+      - main
+      - staging
+      - develop
+
+env:
+  ECR_REGISTRY: 739329184067.dkr.ecr.ca-central-1.amazonaws.com
+  ECR_REPOSITORY: mb-client-admin
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js Environment
+        uses: actions/setup-node@v2
+        with:
+          node-version: '18'
+
+      #      - name: Get next version
+      #        uses: nick-invision/retry@v2
+      #        with:
+      #          timeout_minutes: 15
+      #          max_attempts: 2
+      #          command: |
+      #            npm install
+      #            npx semantic-release --dry-run
+      #            cat ./artifacts/.VERSION >> $GITHUB_ENV
+      #        env:
+      #          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ca-central-1
+
+      - name: Login to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build , tag and Push Dev image
+        if: github.ref == 'refs/heads/develop'
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:latest-dev
+
+      - name: Build, tag and push Stg image to ECR
+        if: github.ref == 'refs/heads/staging'
+        env:
+          IMAGE_TAG: ${{ github.event.inputs.container_version }}
+        run: |
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$NEXT_VERSION .
+          docker tag $ECR_REGISTRY/$ECR_REPOSITORY:$NEXT_VERSION $ECR_REGISTRY/$ECR_REPOSITORY:latest-stg
+          docker push --all-tags $ECR_REGISTRY/$ECR_REPOSITORY
+
+      - name: Build, tag and push Prod image to ECR
+        if: github.ref == 'refs/heads/main'
+        env:
+          IMAGE_TAG: ${{ github.event.inputs.container_version }}
+        run: |
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$NEXT_VERSION .
+          docker tag $ECR_REGISTRY/$ECR_REPOSITORY:$NEXT_VERSION $ECR_REGISTRY/$ECR_REPOSITORY:latest
+          docker push --all-tags $ECR_REGISTRY/$ECR_REPOSITORY
+
+      - name: Deploy to Hetzner development
+        uses: appleboy/ssh-action@master
+        if: github.ref == 'refs/heads/develop'
+        with:
+          host: ${{ secrets.SSH_DEV_HOST }}
+          username: ${{ secrets.SSH_DEV_USERNAME }}
+          password: ${{ secrets.SSH_DEV_PASSWORD }}
+          port: ${{ secrets.SSH_DEV_PORT }}
+          script: |
+            pwd
+            whoami
+            cd ~/maraboo-client
+            aws ecr get-login-password --region ca-central-1 | docker login --username AWS --password-stdin ${{ env.ECR_REGISTRY }}
+            docker compose pull maraboo-client-admin
+            docker compose down -v --remove-orphans
+            docker compose up -d --force-recreate maraboo-client-admin
+            docker image prune -af
+
+      - name: Deploy to Hetzner Staging
+        uses: appleboy/ssh-action@master
+        if: github.ref == 'refs/heads/staging'
+        with:
+          host: ${{ secrets.SSH_DEV_HOST }}
+          username: ${{ secrets.SSH_DEV_USERNAME }}
+          password: ${{ secrets.SSH_DEV_PASSWORD }}
+          port: ${{ secrets.SSH_DEV_PORT }}
+          script: |
+            pwd
+            whoami
+            cd ~/maraboo-admin
+            aws ecr get-login-password --region ca-central-1 | docker login --username AWS --password-stdin ${{ env.ECR_REGISTRY }}
+            docker compose pull stg-admin
+            docker compose down -v --remove-orphans
+            docker compose up -d --force-recreate stg-admin
+            docker image prune -af
+
+      - name: Deploy to Hetzner Prod
+        uses: appleboy/ssh-action@master
+        if: github.ref == 'refs/heads/main'
+        with:
+          host: ${{ secrets.SSH_STAGING_HOST }}
+          username: ${{ secrets.SSH_DEV_USERNAME }}
+          password: ${{ secrets.SSH_DEV_PASSWORD }}
+          port: ${{ secrets.SSH_DEV_PORT }}
+          script: |
+            pwd
+            whoami
+            cd ~/maraboo-admin
+            aws ecr get-login-password --region ca-central-1 | docker login --username AWS --password-stdin ${{ env.ECR_REGISTRY }}
+            docker compose pull maraboo-admin
+            docker compose down -v --remove-orphans
+            docker compose up -d --force-recreate maraboo-admin
+            docker image prune -af
