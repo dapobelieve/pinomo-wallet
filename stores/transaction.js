@@ -64,12 +64,19 @@ export const useTransactionStore = defineStore('transactions', {
       }
     },
     prependTransaction(transaction) {
+      const existingIndex = this.transactions.findIndex(t => t.id === transaction.id)
+
       const formattedTransaction = {
         ...transaction,
         from_currency: transaction.currency || transaction.from_currency,
       }
-      this.transactions.unshift(formattedTransaction)
-      this.pagination.total += 1
+
+      if (existingIndex !== -1) {
+        this.transactions[existingIndex] = formattedTransaction
+      } else {
+        this.transactions.unshift(formattedTransaction)
+        this.pagination.total += 1
+      }
     },
   },
 })

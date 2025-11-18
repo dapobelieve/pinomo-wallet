@@ -40,16 +40,8 @@ export const usePusherConnection = () => {
         })
       }
 
-      if (event.transaction?.source_wallet_id) {
-        if (event.source_balance) {
-          walletStore.updateWalletBalance(event.transaction.source_wallet_id, event.source_balance)
-        } else if (event.balance) {
-          walletStore.updateWalletBalance(event.transaction.source_wallet_id, event.balance)
-        }
-      }
-
-      if (event.transaction?.destination_wallet_id && event.destination_balance) {
-        walletStore.updateWalletBalance(event.transaction.destination_wallet_id, event.destination_balance)
+      if (event.wallet_id && event.balance) {
+        walletStore.updateWalletBalance(event.wallet_id, event.balance)
       }
     } catch (error) {
       console.error('Error handling transaction event:', error)
@@ -76,10 +68,22 @@ export const usePusherConnection = () => {
       const channelName = `user.${userId.value}`
       channel.value = $echo.private(channelName)
 
+      console.log(`[Pusher Debug] Attempting to subscribe to: ${channelName}`)
+      console.log(`[Pusher Debug] Listening for event: .transaction.processed`)
+
       channel.value.listen('.transaction.processed', handleTransactionProcessed)
+
+      channel.value.notification((notification) => {
+        console.log('[Pusher Debug] Notification received:', notification)
+      })
+
+      channel.value.listenToAll((eventName, data) => {
+        console.log('[Pusher Debug] Event received - Name:', eventName, 'Data:', data)
+      })
 
       channel.value.subscribed(() => {
         console.log(`Successfully subscribed to ${channelName}`)
+        console.log(`[Pusher Debug] User ID: ${userId.value}`)
         connectionStatus.value = 'connected'
       })
 
