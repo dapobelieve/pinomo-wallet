@@ -22,7 +22,7 @@ export const useTransactionStore = defineStore('transactions', {
       this.error = null
       try {
         const { $api } = useNuxtApp()
-        const { offset = 0, limit = 10, ...rest } = params
+        const { offset = 0, limit = 100, ...rest } = params
         const page = Math.floor(offset / limit) + 1
         const res = await $api.get('/api/v1/wallets/transactions', {
           params: { page, per_page: limit, ...rest },
